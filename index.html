@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Flip Page dengan Tombol Dinamis</title>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <link rel="stylesheet" href="css/view-pager.css">
+  <link rel="stylesheet" href="css/data.css">
+  <link href="https://fonts.googleapis.com/css2?family=Anton&display=swap" rel="stylesheet">
+</head>
+<body>
+  <!-- Tombol -->
+  <div class="btn-flip" id="flipBtn">
+    <img src="images/generate.gif" id="iconNext" class="visible" alt="Play"/>
+    <img src="images/data.gif" id="iconBack" class="hidden" alt="Play"/>   
+  </div>
+  <!-- Container Halaman -->
+ <div class="page-container">
+    <div class="page page1 active" id="page1">
+      <h1>Smart Lottery Generated</h1>
+      <div class="controls">
+        <input type="text" id="kodeInput" placeholder="Masukkan kode untuk dicek"/>
+        <button onclick="cekKode()">Cek Kode</button>
+      </div>
+      <div id="popupBox">
+        <div id="popupText"></div>
+        <div id="popupIcon"></div>
+        <div id="popupDetail"></div>
+      </div>
+      <div class="result">
+        Kode Kupon: <span id="kodeHasil">-</span> |
+        Urut Kupon: <span id="barisHasil">-</span> |
+        Status: <span id="ikonHasil">🔍</span>
+      </div>
+    </div>
+    <div class="page page2 inactive" id="page2">
+      <h1>Server Controls</h1>
+      <div class="controls">
+        <input type="number" id="jumlahBaris" placeholder="Jumlah baris"/>
+        <button onclick="generateRows()">Tambah Baris</button>
+        <button onclick="hapusBarisBawahPrompt()">Hapus Baris Bawah</button>
+        <button onclick="clearTable()">Hapus Semua</button>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>NO.</th>
+            <th>DATA</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+  </div>
+  <!-- Isi Semua Java Script -->
+  <script src="js/script.js"></script>
+</body>
+</html>
