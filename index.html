@@ -74,36 +74,30 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// === DATA ===
 let rowCount = 0;
 const maxRows = 1000;
 
-// Load data lama dari Firestore
-window.onload = async function () {
-  const docRef = doc(db, "tabel", "dataTabel");
-  const snap = await getDoc(docRef);
-  if (snap.exists()) {
-    let data = snap.data().rows || [];
-    data.forEach(row => addRow(row.Data));
-  } else {
-    addRow();
-  }
-};
-
-// Tambah baris
+// === FUNGSI TAMBAH ROW ===
 function addRow(value = "") {
-  if (rowCount >= maxRows) { alert("Baris sudah mencapai batas maksimum (1000)!"); return;}
+  if (rowCount >= maxRows) { alert("Baris sudah mencapai batas maksimum (1000)!"); return; }
   rowCount++;
   const tbody = document.getElementById("tableBody");
   let tr = document.createElement("tr");
-  let tdNo = document.createElement("td"); tdNo.innerText = rowCount; tr.appendChild(tdNo);
+
+  // Kolom nomor
+  let tdNo = document.createElement("td");
+  tdNo.innerText = rowCount;
+  tr.appendChild(tdNo);
+
+  // Kolom input
   let tdInput = document.createElement("td");
   tdInput.innerHTML = `<input type='text' value='${value}' oninput='autoSave()'/>`;
   tr.appendChild(tdInput);
+
   tbody.appendChild(tr);
 }
 
-// Save ke Firestore
+// === SAVE KE FIRESTORE ===
 async function saveTable() {
   let data = [];
   document.querySelectorAll("#tableBody tr").forEach(row => {
@@ -112,39 +106,33 @@ async function saveTable() {
     data.push({ No: nomor, Data: isi });
   });
   await setDoc(doc(db, "tabel", "dataTabel"), { rows: data });
-  console.log("✅ Data tersimpan di Firestore");
+  console.log("✅ Data tersimpan ke Firestore");
 }
 function autoSave() { saveTable(); }
 
-// Hapus semua data
+// === LOAD DATA SAAT PERTAMA ===
+window.addEventListener("DOMContentLoaded", async () => {
+  try {
+    const docRef = doc(db, "tabel", "dataTabel");
+    const snap = await getDoc(docRef);
+    if (snap.exists() && snap.data().rows.length > 0) {
+      let data = snap.data().rows;
+      data.forEach(row => addRow(row.Data));
+    } else {
+      addRow(); // kalau kosong tetap bikin 1 baris
+    }
+  } catch (e) {
+    console.error("❌ Error load:", e);
+    addRow(); // fallback biar tetep ada row
+  }
+});
+
+// === CLEAR TABLE ===
 async function clearTable() {
-  Swal.fire({
-    imageUrl: 'images/password.gif',
-    imageWidth: 150,
-    imageHeight: 150,
-    title: 'Hapus Semua Data',
-    text: 'Tindakan ini akan menghapus semua data!',
-    input: 'password',
-    inputPlaceholder: 'Password',
-    showCancelButton: true,
-    confirmButtonText: 'Hapus',
-    cancelButtonText: 'Batal',
-    customClass: {
-      title: 'swal-title-center',
-      input: 'swal-input-center'
-    }
-  }).then(async (result)=>{
-    if(result.isConfirmed){
-      if(result.value==='adit123'){
-        await setDoc(doc(db, "tabel", "dataTabel"), { rows: [] }); // reset firestore
-        document.getElementById("tableBody").innerHTML="";
-        rowCount=0;
-        addRow();
-        document.getElementById("popupBox").style.display="none";
-        Swal.fire('Berhasil!', 'Semua data telah dihapus.', 'success');
-      } else Swal.fire('Error','Password salah!','error');
-    }
-  });
+  await setDoc(doc(db, "tabel", "dataTabel"), { rows: [] });
+  document.getElementById("tableBody").innerHTML = "";
+  rowCount = 0;
+  addRow();
 }
 </script>
 </body>
