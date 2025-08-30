@@ -1,0 +1,30 @@
+h1 { text-align:center; font-family: 'Anton';, sans-serif; -webkit-text-stroke: 0.5px white;text-shadow: 0 0 2px black;color:black;}
+.controls { margin-bottom:20px; display:flex; gap:10px; flex-wrap:wrap; justify-content:center;}
+input[type="number"], input[type="text"] { padding:6px 10px; font-size:14px;}
+button { padding:6px 12px; font-size:14px; cursor:pointer; border:none; border-radius:30px; background:#f39c12; color:black;}
+button:hover { background:#f39c12; outline: 2px solid black; -webkit-tap-highlight-color: transparent; }
+table { width:100%; max-width:600px; margin:0 auto; border-collapse:collapse; background-color: rgba(255, 255, 255, 0.1); backdrop-filter: blur(1px); box-shadow:0 2px 8px rgba(0,0,0,0.1);}
+th, td {
+  border:2px solid black;
+  padding:8px;
+  text-align:center;        /* teks rata tengah horizontal */
+  vertical-align:middle;   /* teks rata tengah vertikal */
+}
+th { background:#1a1a1a; color:white;}
+td input {
+  width:100%;
+  padding:4px 6px;
+  box-sizing:border-box;
+  text-align:center;       /* teks input rata tengah */
+}
+.result { margin-top:20px; text-align:center; font-size:16px;}
+.result span { font-weight:bold; margin:0 5px;}
+#popupBox { display:none; margin-top:10px; max-width:600px; margin-left:auto; margin-right:auto; padding:10px; border:3px solid; border-radius:12px; text-align:center; font-size:16px; box-shadow:0 2px 8px rgba(0,0,0,0.1); background: white;}
+#popupText { font-size:18px; margin-bottom:10px; }
+#popupIcon { font-size:24px; margin-bottom:10px;}
+#popupIcon img { width:60px; height:60px; }
+#popupDetail { margin-top:5px; display:flex; justify-content:center; gap:10px; flex-wrap:wrap; align-items:center;}
+.circle { display:inline-flex; justify-content:center; align-items:center; width:30px; height:30px; border-radius:50%; color:white; font-weight:bold;}
+.box { display:inline-block; padding:5px 10px; border-radius:8px; color:white; font-weight:bold;}
+.swal2-popup { border: 2px solid transparent; border-radius: 20px; background: white; box-shadow: 0 0 5px white, 0 0 10px white, 0 0 15px grey;}
+.swal2-container { backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);}
