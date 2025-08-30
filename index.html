@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tabel Editable + Cek Kode</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    table { border-collapse: collapse; width: 100%; margin-top: 10px; }
+    th, td {
+      border: 1px solid #555;
+      padding: 6px;
+      text-align: center;
+      min-width: 100px;
+    }
+    input[type="text"] {
+      border: none;
+      width: 100%;
+      text-align: center;
+      background: transparent;
+    }
+    input[type="number"] {
+      padding: 4px;
+      width: 80px;
+    }
+
+    .input-group { display: flex; align-items: center; gap: 5px; margin-top: 10px; }
+    .input-group input {
+      flex: 1;
+      padding: 8px;
+      border-radius: 6px;
+      border: 1px solid #888;
+    }
+    button { margin: 5px; padding: 6px 10px; cursor: pointer; }
+    button.generate { background: #007bff; color: white; border: none; border-radius: 6px; }
+    button.clear { background: #dc3545; color: white; border: none; border-radius: 6px; }
+
+    /* hasil area permanen */
+    #hasilArea {
+      margin-top: 15px;
+      padding: 15px;
+      border-radius: 20px;
+      background: #f1f1f1;
+      width: fit-content;
+    }
+    #hasilArea h3 {
+      margin: 0 0 10px 0;
+    }
+    #hasilArea span {
+      background: #ffd966;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-family: monospace;
+      display: inline-block;
+      margin: 2px;
+    }
+    #ikonHasil {
+      font-size: 20px;
+      margin-left: 8px;
+    }
+  </style>
+</head>
+<body>
+  <h2>Tabel Editable (Max 1000 Baris)</h2>
+  
+  <div>
+    <label>Gawe: </label>
+    <input type="number" id="jumlahBaris" min="1" max="1000" value="10">
+    <button onclick="generateRows()">Buat Baris</button>
+  </div>
+
+  <button onclick="addRow()">+ Tambah 1 Baris</button>
+  <button onclick="saveTable()">💾 Simpan Manual</button>
+  <button onclick="clearTable()">🗑 Hapus Data</button>
+  
+  <table id="editableTable">
+    <thead>
+      <tr>
+        <th>No</th>
+        <th>Data</th>
+      </tr>
+    </thead>
+    <tbody id="tableBody"></tbody>
+  </table>
+
+  <hr>
+
+  <h2>Cek Kode</h2>
+  <div class="input-group">
+    <input type="text" id="kodeInput" placeholder="Tulis kode di sini">
+    <button class="clear" onclick="clearInput()">X</button>
+  </div>
+  <button class="generate" onclick="cekKode()">Generate</button>
+
+  <!-- Hasil permanen -->
+  <div id="hasilArea">
+    <h3>Hasil Pencarian <span id="ikonHasil">🔍</span></h3>
+    <p>Kode: <span id="kodeHasil">-</span></p>
+    <p>Baris: <span id="barisHasil">-</span></p>
+  </div>
+
+  <script>
+    let rowCount = 0;
+    const maxRows = 1000;
+
+    window.onload = function() {
+      const saved = localStorage.getItem("tabelData");
+      if (saved) {
+        let data = JSON.parse(saved);
+        data.forEach(row => addRow(row.Data));
+      } else {
+        addRow();
+      }
+    };
+
+    function addRow(value = "") {
+      if (rowCount >= maxRows) {
+        alert("Baris sudah mencapai batas maksimum (1000)!");
+        return;
+      }
+      rowCount++;
+
+      const tbody = document.getElementById("tableBody");
+      let tr = document.createElement("tr");
+
+      let tdNo = document.createElement("td");
+      tdNo.innerText = rowCount;
+      tr.appendChild(tdNo);
+
+      let tdInput = document.createElement("td");
+      tdInput.innerHTML = `<input type='text' value='${value}' oninput='autoSave()'/>`;
+      tr.appendChild(tdInput);
+
+      tbody.appendChild(tr);
+    }
+
+    function generateRows() {
+      let jumlah = parseInt(document.getElementById("jumlahBaris").value);
+      if (isNaN(jumlah) || jumlah < 1) {
+        alert("Masukkan jumlah baris yang valid!");
+        return;
+      }
+      if (jumlah > maxRows) jumlah = maxRows;
+
+      document.getElementById("tableBody").innerHTML = "";
+      rowCount = 0;
+
+      for (let i = 0; i < jumlah; i++) {
+        addRow();
+      }
+      autoSave();
+    }
+
+    function saveTable() {
+      let data = [];
+      const rows = document.querySelectorAll("#tableBody tr");
+
+      rows.forEach(row => {
+        let nomor = row.querySelector("td:first-child").innerText;
+        let isi = row.querySelector("td input").value;
+        data.push({ No: nomor, Data: isi });
+      });
+
+      localStorage.setItem("tabelData", JSON.stringify(data));
+    }
+
+    function autoSave() {
+      saveTable();
+    }
+
+    function clearTable() {
+      if (confirm("Yakin hapus semua data?")) {
+        localStorage.removeItem("tabelData");
+        document.getElementById("tableBody").innerHTML = "";
+        rowCount = 0;
+        addRow();
+      }
+    }
+
+    function cekKode() {
+      const kode = document.getElementById("kodeInput").value.trim();
+      const kodeHasil = document.getElementById("kodeHasil");
+      const barisHasil = document.getElementById("barisHasil");
+      const ikonHasil = document.getElementById("ikonHasil");
+
+      if (kode === "") {
+        kodeHasil.innerText = "-";
+        barisHasil.innerText = "-";
+        ikonHasil.innerText = "🔍";
+        return;
+      }
+
+      const rows = document.querySelectorAll("#tableBody tr");
+      let foundAt = [];
+
+      rows.forEach(row => {
+        let no = row.querySelector("td:first-child").innerText;
+        let isi = row.querySelector("td input").value.trim();
+        if (isi === kode) {
+          foundAt.push(no);
+        }
+      });
+
+      // update hasil permanen
+      kodeHasil.innerText = kode;
+      if (foundAt.length > 0) {
+        barisHasil.innerText = foundAt.join(", ");
+        ikonHasil.innerText = "✅"; // ketemu
+      } else {
+        barisHasil.innerText = "Tidak ditemukan";
+        ikonHasil.innerText = "❌"; // tidak ketemu
+      }
+
+      clearInput();
+    }
+
+    function clearInput() {
+      document.getElementById("kodeInput").value = "";
+    }
+  </script>
+</body>
+</html>
+
