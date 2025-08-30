@@ -55,29 +55,41 @@
   </div>
   <!-- Isi Semua Java Script -->
   <script src="js/script.js"></script>
-  <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
-  import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-database.js";
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
-  // Konfigurasi Firebase (punyamu)
+  // Config Firebase-mu
   const firebaseConfig = {
     apiKey: "AIzaSyA3R3hhFosI1qpRsmVffv0sbZVaY3REif8",
     authDomain: "data-8a36d.firebaseapp.com",
     projectId: "data-8a36d",
-    storageBucket: "data-8a36d.firebasestorage.app",
+    storageBucket: "data-8a36d.appspot.com",
     messagingSenderId: "1084525995314",
     appId: "1:1084525995314:web:5fcdfa7823f65dfc5ca32b",
     measurementId: "G-ZFFSNEE357"
   };
 
-  // Init
+  // Inisialisasi Firebase
   const app = initializeApp(firebaseConfig);
   const db = getDatabase(app);
 
-  // === GANTI localStorage → Firebase ===
+  let rowCount = 0;
 
-  // Simpan tabel ke Firebase
-  function saveTableFirebase() {
+  // Tambah baris tabel
+  window.addRow = function(value = "") {
+    rowCount++;
+    const tableBody = document.getElementById("tableBody");
+    const row = document.createElement("tr");
+    row.innerHTML = `
+      <td>${rowCount}</td>
+      <td><input type="text" value="${value}" oninput="autoSave()" /></td>
+    `;
+    tableBody.appendChild(row);
+  };
+
+  // Simpan otomatis ke Firebase
+  window.autoSave = function() {
     let data = [];
     document.querySelectorAll("#tableBody tr").forEach(row => {
       let nomor = row.querySelector("td:first-child").innerText;
@@ -85,14 +97,35 @@
       data.push({ No: nomor, Data: isi });
     });
     set(ref(db, "tabelData"), data);
-  }
-
-  // Auto save setiap input
-  window.autoSave = function() {
-    saveTableFirebase();
   };
 
-  // Load data awal dari Firebase
+  // Generate beberapa baris langsung
+  window.generateRows = function() {
+    let jumlah = parseInt(document.getElementById("jumlahBaris").value) || 1;
+    for (let i = 0; i < jumlah; i++) {
+      addRow();
+    }
+    autoSave();
+  };
+
+  // Hapus baris terakhir
+  window.hapusBarisBawahPrompt = function() {
+    const tableBody = document.getElementById("tableBody");
+    if (tableBody.lastChild) {
+      tableBody.removeChild(tableBody.lastChild);
+      rowCount--;
+      autoSave();
+    }
+  };
+
+  // Hapus semua baris
+  window.clearTable = function() {
+    document.getElementById("tableBody").innerHTML = "";
+    rowCount = 0;
+    autoSave();
+  };
+
+  // Load data dari Firebase
   function loadTableFirebase() {
     const tableRef = ref(db, "tabelData");
     onValue(tableRef, (snapshot) => {
@@ -102,43 +135,11 @@
       if (data) {
         data.forEach(row => addRow(row.Data));
       } else {
-        addRow();
+        addRow(); // default 1 baris kosong
       }
     });
   }
 
-  // Hapus semua data di Firebase
-  window.clearTable = function() {
-    Swal.fire({
-      imageUrl: 'images/password.gif',
-      imageWidth: 150,
-      imageHeight: 150,
-      title: 'Hapus Semua Data',
-      text: 'Tindakan ini akan menghapus semua data!',
-      input: 'password',
-      inputPlaceholder: 'Password',
-      showCancelButton: true,
-      confirmButtonText: 'Hapus',
-      cancelButtonText: 'Batal',
-      customClass: {
-        title: 'swal-title-center',
-        input: 'swal-input-center'
-      }
-    }).then((result)=>{
-      if(result.isConfirmed){
-        if(result.value==='adit123'){
-          set(ref(db, "tabelData"), null); // hapus di Firebase
-          document.getElementById("tableBody").innerHTML="";
-          rowCount=0;
-          addRow();
-          document.getElementById("popupBox").style.display="none";
-          Swal.fire('Berhasil!', 'Semua data telah dihapus.', 'success');
-        } else Swal.fire('Error','Password salah!','error');
-      }
-    });
-  };
-
-  // Jalankan pertama kali
   loadTableFirebase();
 </script>
 </body>
