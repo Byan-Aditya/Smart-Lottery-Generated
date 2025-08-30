@@ -56,27 +56,90 @@
   <!-- Isi Semua Java Script -->
   <script src="js/script.js"></script>
   <script type="module">
-      // Import the functions you need from the SDKs you need
-      import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
-      import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-analytics.js";
-      // TODO: Add SDKs for Firebase products that you want to use
-      // https://firebase.google.com/docs/web/setup#available-libraries
-    
-      // Your web app's Firebase configuration
-      // For Firebase JS SDK v7.20.0 and later, measurementId is optional
-      const firebaseConfig = {
-        apiKey: "AIzaSyA3R3hhFosI1qpRsmVffv0sbZVaY3REif8",
-        authDomain: "data-8a36d.firebaseapp.com",
-        projectId: "data-8a36d",
-        storageBucket: "data-8a36d.firebasestorage.app",
-        messagingSenderId: "1084525995314",
-        appId: "1:1084525995314:web:5fcdfa7823f65dfc5ca32b",
-        measurementId: "G-ZFFSNEE357"
-      };
-    
-      // Initialize Firebase
-      const app = initializeApp(firebaseConfig);
-      const analytics = getAnalytics(app);
-  </script>
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
+  import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-database.js";
+
+  // Konfigurasi Firebase (punyamu)
+  const firebaseConfig = {
+    apiKey: "AIzaSyA3R3hhFosI1qpRsmVffv0sbZVaY3REif8",
+    authDomain: "data-8a36d.firebaseapp.com",
+    projectId: "data-8a36d",
+    storageBucket: "data-8a36d.firebasestorage.app",
+    messagingSenderId: "1084525995314",
+    appId: "1:1084525995314:web:5fcdfa7823f65dfc5ca32b",
+    measurementId: "G-ZFFSNEE357"
+  };
+
+  // Init
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+
+  // === GANTI localStorage → Firebase ===
+
+  // Simpan tabel ke Firebase
+  function saveTableFirebase() {
+    let data = [];
+    document.querySelectorAll("#tableBody tr").forEach(row => {
+      let nomor = row.querySelector("td:first-child").innerText;
+      let isi = row.querySelector("td input").value;
+      data.push({ No: nomor, Data: isi });
+    });
+    set(ref(db, "tabelData"), data);
+  }
+
+  // Auto save setiap input
+  window.autoSave = function() {
+    saveTableFirebase();
+  };
+
+  // Load data awal dari Firebase
+  function loadTableFirebase() {
+    const tableRef = ref(db, "tabelData");
+    onValue(tableRef, (snapshot) => {
+      document.getElementById("tableBody").innerHTML = "";
+      rowCount = 0;
+      let data = snapshot.val();
+      if (data) {
+        data.forEach(row => addRow(row.Data));
+      } else {
+        addRow();
+      }
+    });
+  }
+
+  // Hapus semua data di Firebase
+  window.clearTable = function() {
+    Swal.fire({
+      imageUrl: 'images/password.gif',
+      imageWidth: 150,
+      imageHeight: 150,
+      title: 'Hapus Semua Data',
+      text: 'Tindakan ini akan menghapus semua data!',
+      input: 'password',
+      inputPlaceholder: 'Password',
+      showCancelButton: true,
+      confirmButtonText: 'Hapus',
+      cancelButtonText: 'Batal',
+      customClass: {
+        title: 'swal-title-center',
+        input: 'swal-input-center'
+      }
+    }).then((result)=>{
+      if(result.isConfirmed){
+        if(result.value==='adit123'){
+          set(ref(db, "tabelData"), null); // hapus di Firebase
+          document.getElementById("tableBody").innerHTML="";
+          rowCount=0;
+          addRow();
+          document.getElementById("popupBox").style.display="none";
+          Swal.fire('Berhasil!', 'Semua data telah dihapus.', 'success');
+        } else Swal.fire('Error','Password salah!','error');
+      }
+    });
+  };
+
+  // Jalankan pertama kali
+  loadTableFirebase();
+</script>
 </body>
 </html>
