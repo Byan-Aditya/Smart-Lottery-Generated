@@ -55,92 +55,58 @@
   </div>
   <!-- Isi Semua Java Script -->
   <script src="js/script.js"></script>
+<!-- Firebase SDK -->
 <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-  import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
+  import { getFirestore, collection, doc, setDoc, getDocs } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
 
-  // Config Firebase-mu
+  // Config sampeyan
   const firebaseConfig = {
     apiKey: "AIzaSyA3R3hhFosI1qpRsmVffv0sbZVaY3REif8",
     authDomain: "data-8a36d.firebaseapp.com",
     projectId: "data-8a36d",
-    storageBucket: "data-8a36d.appspot.com",
+    storageBucket: "data-8a36d.firebasestorage.app",
     messagingSenderId: "1084525995314",
     appId: "1:1084525995314:web:5fcdfa7823f65dfc5ca32b",
     measurementId: "G-ZFFSNEE357"
   };
 
-  // Inisialisasi Firebase
+  // Init Firebase
   const app = initializeApp(firebaseConfig);
-  const db = getDatabase(app);
+  const db = getFirestore(app);
 
-  let rowCount = 0;
-
-  // Tambah baris tabel
-  window.addRow = function(value = "") {
-    rowCount++;
-    const tableBody = document.getElementById("tableBody");
-    const row = document.createElement("tr");
-    row.innerHTML = `
-      <td>${rowCount}</td>
-      <td><input type="text" value="${value}" oninput="autoSave()" /></td>
-    `;
-    tableBody.appendChild(row);
-  };
-
-  // Simpan otomatis ke Firebase
-  window.autoSave = function() {
-    let data = [];
-    document.querySelectorAll("#tableBody tr").forEach(row => {
-      let nomor = row.querySelector("td:first-child").innerText;
-      let isi = row.querySelector("td input").value;
-      data.push({ No: nomor, Data: isi });
+  // --- simpan tabel ke firestore ---
+  async function saveTable() {
+    const rows = [];
+    document.querySelectorAll("#tableBody tr").forEach((tr, index) => {
+      const input = tr.querySelector("input");
+      rows.push({ no: index + 1, data: input.value });
     });
-    set(ref(db, "tabelData"), data);
-  };
 
-  // Generate beberapa baris langsung
-  window.generateRows = function() {
-    let jumlah = parseInt(document.getElementById("jumlahBaris").value) || 1;
-    for (let i = 0; i < jumlah; i++) {
-      addRow();
-    }
-    autoSave();
-  };
+    // Simpan ke dokumen tunggal
+    await setDoc(doc(db, "tabel", "dataTabel"), { rows: rows });
+    console.log("✅ Data tersimpan ke Firestore");
+  }
 
-  // Hapus baris terakhir
-  window.hapusBarisBawahPrompt = function() {
-    const tableBody = document.getElementById("tableBody");
-    if (tableBody.lastChild) {
-      tableBody.removeChild(tableBody.lastChild);
-      rowCount--;
-      autoSave();
-    }
-  };
-
-  // Hapus semua baris
-  window.clearTable = function() {
-    document.getElementById("tableBody").innerHTML = "";
-    rowCount = 0;
-    autoSave();
-  };
-
-  // Load data dari Firebase
-  function loadTableFirebase() {
-    const tableRef = ref(db, "tabelData");
-    onValue(tableRef, (snapshot) => {
-      document.getElementById("tableBody").innerHTML = "";
-      rowCount = 0;
-      let data = snapshot.val();
-      if (data) {
-        data.forEach(row => addRow(row.Data));
-      } else {
-        addRow(); // default 1 baris kosong
+  // --- load tabel dari firestore ---
+  async function loadTable() {
+    const snapshot = await getDocs(collection(db, "tabel"));
+    snapshot.forEach((docSnap) => {
+      if (docSnap.id === "dataTabel") {
+        const rows = docSnap.data().rows || [];
+        rows.forEach(r => addRow(r.data));
       }
     });
   }
 
-  loadTableFirebase();
+  // panggil load pas pertama kali
+  document.addEventListener("DOMContentLoaded", () => {
+    loadTable();
+  });
+
+  // biar fungsi autoSave tetep jalan
+  window.autoSave = saveTable;
 </script>
+
 </body>
 </html>
