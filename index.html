@@ -57,56 +57,95 @@
   <script src="js/script.js"></script>
 <!-- Firebase SDK -->
 <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
-  import { getFirestore, collection, doc, setDoc, getDocs } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
+// === Firebase ===
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
+import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
 
-  // Config sampeyan
-  const firebaseConfig = {
-    apiKey: "AIzaSyA3R3hhFosI1qpRsmVffv0sbZVaY3REif8",
-    authDomain: "data-8a36d.firebaseapp.com",
-    projectId: "data-8a36d",
-    storageBucket: "data-8a36d.firebasestorage.app",
-    messagingSenderId: "1084525995314",
-    appId: "1:1084525995314:web:5fcdfa7823f65dfc5ca32b",
-    measurementId: "G-ZFFSNEE357"
-  };
+// Config sampeyan
+const firebaseConfig = {
+  apiKey: "AIzaSyA3R3hhFosI1qpRsmVffv0sbZVaY3REif8",
+  authDomain: "data-8a36d.firebaseapp.com",
+  projectId: "data-8a36d",
+  storageBucket: "data-8a36d.firebasestorage.app",
+  messagingSenderId: "1084525995314",
+  appId: "1:1084525995314:web:5fcdfa7823f65dfc5ca32b",
+  measurementId: "G-ZFFSNEE357"
+};
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
-  // Init Firebase
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
+// === DATA ===
+let rowCount = 0;
+const maxRows = 1000;
 
-  // --- simpan tabel ke firestore ---
-  async function saveTable() {
-    const rows = [];
-    document.querySelectorAll("#tableBody tr").forEach((tr, index) => {
-      const input = tr.querySelector("input");
-      rows.push({ no: index + 1, data: input.value });
-    });
-
-    // Simpan ke dokumen tunggal
-    await setDoc(doc(db, "tabel", "dataTabel"), { rows: rows });
-    console.log("✅ Data tersimpan ke Firestore");
+// Load data lama dari Firestore
+window.onload = async function () {
+  const docRef = doc(db, "tabel", "dataTabel");
+  const snap = await getDoc(docRef);
+  if (snap.exists()) {
+    let data = snap.data().rows || [];
+    data.forEach(row => addRow(row.Data));
+  } else {
+    addRow();
   }
+};
 
-  // --- load tabel dari firestore ---
-  async function loadTable() {
-    const snapshot = await getDocs(collection(db, "tabel"));
-    snapshot.forEach((docSnap) => {
-      if (docSnap.id === "dataTabel") {
-        const rows = docSnap.data().rows || [];
-        rows.forEach(r => addRow(r.data));
-      }
-    });
-  }
+// Tambah baris
+function addRow(value = "") {
+  if (rowCount >= maxRows) { alert("Baris sudah mencapai batas maksimum (1000)!"); return;}
+  rowCount++;
+  const tbody = document.getElementById("tableBody");
+  let tr = document.createElement("tr");
+  let tdNo = document.createElement("td"); tdNo.innerText = rowCount; tr.appendChild(tdNo);
+  let tdInput = document.createElement("td");
+  tdInput.innerHTML = `<input type='text' value='${value}' oninput='autoSave()'/>`;
+  tr.appendChild(tdInput);
+  tbody.appendChild(tr);
+}
 
-  // panggil load pas pertama kali
-  document.addEventListener("DOMContentLoaded", () => {
-    loadTable();
+// Save ke Firestore
+async function saveTable() {
+  let data = [];
+  document.querySelectorAll("#tableBody tr").forEach(row => {
+    let nomor = row.querySelector("td:first-child").innerText;
+    let isi = row.querySelector("td input").value;
+    data.push({ No: nomor, Data: isi });
   });
+  await setDoc(doc(db, "tabel", "dataTabel"), { rows: data });
+  console.log("✅ Data tersimpan di Firestore");
+}
+function autoSave() { saveTable(); }
 
-  // biar fungsi autoSave tetep jalan
-  window.autoSave = saveTable;
+// Hapus semua data
+async function clearTable() {
+  Swal.fire({
+    imageUrl: 'images/password.gif',
+    imageWidth: 150,
+    imageHeight: 150,
+    title: 'Hapus Semua Data',
+    text: 'Tindakan ini akan menghapus semua data!',
+    input: 'password',
+    inputPlaceholder: 'Password',
+    showCancelButton: true,
+    confirmButtonText: 'Hapus',
+    cancelButtonText: 'Batal',
+    customClass: {
+      title: 'swal-title-center',
+      input: 'swal-input-center'
+    }
+  }).then(async (result)=>{
+    if(result.isConfirmed){
+      if(result.value==='adit123'){
+        await setDoc(doc(db, "tabel", "dataTabel"), { rows: [] }); // reset firestore
+        document.getElementById("tableBody").innerHTML="";
+        rowCount=0;
+        addRow();
+        document.getElementById("popupBox").style.display="none";
+        Swal.fire('Berhasil!', 'Semua data telah dihapus.', 'success');
+      } else Swal.fire('Error','Password salah!','error');
+    }
+  });
+}
 </script>
-
 </body>
 </html>
